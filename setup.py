@@ -32,6 +32,9 @@ def install_torch():
         import torch
     except ImportError:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "torch"])
+        import torch
+        if not torch.cuda.is_available():
+            raise Exception("CUDA NOT AVAILABLE")
 
 # Call the function to ensure torch is installed
 install_torch()
