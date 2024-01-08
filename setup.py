@@ -37,6 +37,7 @@ def install_torch():
 install_torch()
 
 import torch
+import shutil
 from setuptools import find_packages, setup
 from torch.utils.cpp_extension import CUDA_HOME, CppExtension, CUDAExtension
 
@@ -64,6 +65,24 @@ requirements = ["torch", "torchvision"]
 
 torch_ver = [int(x) for x in torch.__version__.split(".")[:2]]
 
+def verify_nvcc():
+    # Check if nvcc is available
+    if shutil.which("nvcc") is None:
+        print("nvcc not found. Attempting to add CUDA to PATH.")
+        # Typical paths where CUDA is installed
+        cuda_paths = [
+            "/usr/local/cuda/bin", 
+            # "/Developer/NVIDIA/CUDA-XX.X/bin"  # Replace XX.X with your CUDA version
+        ]
+        for path in cuda_paths:
+            if os.path.exists(path):
+                os.environ["PATH"] += os.pathsep + path
+                break
+        # Check again for nvcc
+        if shutil.which("nvcc") is None:
+            print("nvcc still not found. Please ensure CUDA is installed correctly.")
+        else:
+            print("nvcc found after modifying PATH.")
 
 def get_extensions():
     this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -84,6 +103,7 @@ def get_extensions():
 
     if CUDA_HOME is not None and (torch.cuda.is_available() or "TORCH_CUDA_ARCH_LIST" in os.environ):
         print("Compiling with CUDA")
+        verify_nvcc()
         extension = CUDAExtension
         sources += source_cuda
         define_macros += [("WITH_CUDA", None)]
